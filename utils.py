@@ -8,12 +8,12 @@ def get_live_gold_price():
         response = requests.get("https://api.gold-api.com/price/XAU", timeout=8)
         if response.status_code == 200:
             data = response.json()
-            return float(data.get("price", 0.0))
+            return float(data.get("price", 4141.50))
     except Exception as e:
         logging.error(f"خطأ في الاتصال بسوق المال العالمي: {e}")
-    return None
+    return 4141.50
 
-# التحقق من الاشتراك الإجباري في القناة
+# التحقق من الاشتراك الإجباري في القناة الرسمية
 async def check_forced_subscription(user_id, admin_id, channel_username, context):
     if user_id == admin_id:
         return True
