@@ -92,10 +92,10 @@ def get_welcome_text():
         f"- بناء مجتمع نخبوي يضم أشرس المتداولين في أسواق المال.\n\n"
         f"📱 **منصات التواصل الرسمية للمطور (أحمد السيد):**\n"
         f"🔹 **Telegram:** `@V8V8VN`\n"
-        f"🔹 **Instagram:** `@_7tiktok_account`\n\n"ountnt`\n"
-        f"🔹 **TikTok:** `@7ok6_`\n\n"
+        f"🔹 **Instagram:** `_7ok6`\n"
+        f"🔹 **TikTok:** `7ok6_`\n\n"
         f"📊 **حالة العضوية الفخمة:** صلاحية مطلقة - كبار الشخصيات VIP ♾️\n"
-        f"📞 **للدعم والتفعيل المباشر:** `V8V8VN@`\n\n"
+        f"📞 **للدعم والتفعيل المباشر:** `V8V8VN`\n\n"
         f"👇 **اختر من قائمة العمليات أدناه:**"
     )
 
@@ -164,7 +164,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📆 كود أسبوعي ──> 75\n"
             f"🗓️ كود أسبوعين ──> 125\n"
             f"👑 كود شهر VIP ──> 225\n\n"
-            f"للحصول على أي كود، تواصل مع المطور: `V8V8VN@`"
+            f"للحصول على أي كود، تواصل مع المطور: `@V8V8VN`"
         )
         await query.edit_message_text(pricing_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu_start")]]), parse_mode="Markdown")
         return
@@ -321,7 +321,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ الكود غير صالح أو تم استخدامه مسبقاً.", reply_markup=get_main_control_keyboard(is_admin=is_admin))
         return
     
-    # عند إرسال أي نص، نرد بالترحيب واللوحة التفاعلية فوراً
     await update.message.reply_text(get_welcome_text(), reply_markup=get_main_control_keyboard(is_admin=is_admin), parse_mode="Markdown")
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -357,7 +356,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
     
-    print("👑 Clean Bot is running smoothly...")
+    print("👑 Bot is running with correct social handles...")
     app.run_polling()
 
 if __name__ == "__main__":
