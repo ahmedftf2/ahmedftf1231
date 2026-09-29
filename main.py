@@ -8,7 +8,7 @@ from utils import (
     analyze_chart_screenshot, analyze_market_signal
 )
 
-TOKEN = "YOUR_BOT_TOKEN_HERE"  # ضع توكن البوت الخاص بك هنا
+TOKEN = "8884364042:AAEPwYmYQiZ1sN7GUGouMVrgtT3EyNL1d7w"  # ضع توكن البوت الخاص بك هنا
 ADMIN_IDS = [123456789]        # ضع الآيدي الخاص بك هنا
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
