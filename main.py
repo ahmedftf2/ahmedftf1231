@@ -2,7 +2,7 @@ import logging
 import datetime
 import random
 import requests
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 TOKEN = "8884364042:AAEPwYmYQiZ1sN7GUGouMVrgtT3EyNL1d7w"
@@ -37,13 +37,6 @@ def is_subscribed(user_id):
         if expiry_date and datetime.datetime.now() < expiry_date:
             return True
     return False
-
-# الكيبورد الثابت بجانب خانة الكتابة (يحتوي على زر البداية السريع)
-def get_persistent_reply_keyboard():
-    keyboard = [
-        [KeyboardButton("🚀 تشغيل /start واللوحة الرئيسية")]
-    ]
-    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, persistent=True)
 
 def get_main_control_keyboard(is_admin=False):
     keyboard = [
@@ -127,13 +120,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     is_admin = (user.id == ADMIN_ID)
     msg = get_welcome_text()
-    reply_kb = get_persistent_reply_keyboard()
+    keyboard = get_main_control_keyboard(is_admin=is_admin)
     
     if update.callback_query:
-        await update.callback_query.message.edit_text(msg, reply_markup=get_main_control_keyboard(is_admin=is_admin), parse_mode="Markdown")
+        await update.callback_query.message.edit_text(msg, reply_markup=keyboard, parse_mode="Markdown")
     else:
-        await update.message.reply_text("👇 لوحة الأوامر الثابتة جاهزة أسفل الشاشة:", reply_markup=reply_kb)
-        await update.message.reply_text(msg, reply_markup=get_main_control_keyboard(is_admin=is_admin), parse_mode="Markdown")
+        await update.message.reply_text(msg, reply_markup=keyboard, parse_mode="Markdown")
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -315,10 +307,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text if update.message.text else ""
     is_admin = (user_id == ADMIN_ID)
 
-    if text == "🚀 تشغيل /start واللوحة الرئيسية":
-        await start(update, context)
-        return
-
     if context.user_data.get("waiting_for_code"):
         context.user_data["waiting_for_code"] = False
         code_info = db["codes"].get(text)
@@ -328,12 +316,13 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if user_id not in db["users"]:
                 db["users"][user_id] = {"name": update.effective_user.full_name, "username": f"@{update.effective_user.username}"}
             db["users"][user_id]["expiry"] = datetime.datetime.now() + delta
-            await update.message.reply_text(f"🎉 **مبروك يا مولاي! تم تفعيل اشتراكك بنجاح.**", reply_markup=get_persistent_reply_keyboard(), parse_mode="Markdown")
+            await update.message.reply_text(f"🎉 **مبروك يا مولاي! تم تفعيل اشتراكك بنجاح.**", reply_markup=get_main_control_keyboard(is_admin=is_admin), parse_mode="Markdown")
         else:
-            await update.message.reply_text("❌ الكود غير صالح أو تم استخدامه مسبقاً.", reply_markup=get_persistent_reply_keyboard())
+            await update.message.reply_text("❌ الكود غير صالح أو تم استخدامه مسبقاً.", reply_markup=get_main_control_keyboard(is_admin=is_admin))
         return
     
-    await update.message.reply_text("👇 اضغط على زر التشغيل أسفل الشاشة أو استخدم الأزرار:", reply_markup=get_persistent_reply_keyboard())
+    # عند إرسال أي نص، نرد بالترحيب واللوحة التفاعلية فوراً
+    await update.message.reply_text(get_welcome_text(), reply_markup=get_main_control_keyboard(is_admin=is_admin), parse_mode="Markdown")
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -368,7 +357,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
     
-    print("👑 Bot is running and connected successfully...")
+    print("👑 Clean Bot is running smoothly...")
     app.run_polling()
 
 if __name__ == "__main__":
