@@ -4,7 +4,7 @@ import random
 import string
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-from utils import get_live_gold_price, check_forced_subscription, is_subscribed, get_remaining_time, advanced_institutional_analysis
+from utils import get_live_gold_price, check_forced_subscription, is_subscribed, get_remaining_time, real_institutional_strategy
 
 TOKEN = "8884364042:AAEPwYmYQiZ1sN7GUGouMVrgtT3EyNL1d7w"
 ADMIN_ID = 5796443586
@@ -15,7 +15,6 @@ db = {
     "banned": set(),
     "last_signal": "",
     "user_settings": {},
-    "active_signals": {},
     "codes": {}
 }
 
@@ -32,7 +31,7 @@ def get_clean_keyboard(is_admin=False, user_id=None):
     
     keyboard = [
         [InlineKeyboardButton(f"⏳ الوقت المتبقي لاشتراكك: {time_left}", callback_data="noop_c")],
-        [InlineKeyboardButton("📊 الصفقات الجاهزة والثغرات المؤسساتية", callback_data="get_unified_signal")],
+        [InlineKeyboardButton("📊 الصفقات الحقيقية والثغرات المؤسساتية", callback_data="get_unified_signal")],
         [
             InlineKeyboardButton(f"⏱ الفريم: [{settings['tf']}]", callback_data="menu_tf"),
             InlineKeyboardButton(f"⚖ اللوت: [{settings['lot']}]", callback_data="menu_lot")
@@ -44,7 +43,7 @@ def get_clean_keyboard(is_admin=False, user_id=None):
         ]
     ]
     if is_admin:
-        keyboard.insert(0, [InlineKeyboardButton("🛡️ غرفة القيادة وحماية النظام [ADMIN]", callback_data="menu_admin")])
+        keyboard.insert(0, [InlineKeyboardButton("🛡️️ غرفة القيادة وحماية النظام [ADMIN]", callback_data="menu_admin")])
     return InlineKeyboardMarkup(keyboard)
 
 def get_welcome_text(user_id=None):
@@ -54,7 +53,7 @@ def get_welcome_text(user_id=None):
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"⏳ **حالة اشتراكك:** `{time_left}`\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
-        f"👇 اختر من الأزرار أدناه للتحكم بالفريم، اللوت، أو استخراج أحدث الصفقات المؤسساتية:"
+        f"👇 اختر من الأزرار أدناه للتحكم بالفريم، اللوت، أو جلب الصفقة الحقيقية الفورية:"
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -147,7 +146,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "menu_activate":
         context.user_data["waiting_for_code"] = True
-        await query.edit_message_text("🔑 **أرسل الآن كود الاشتراك الفريد الخاص بك في الرسائل لتفعيله:**", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu_start")]]), parse_mode="Markdown")
+        await query.edit_message_text("🔑 **أرسل الآن كود الاشتراك الفريد الخاص بك في الرسائل لتفعيله فوراً:**", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="menu_start")]]), parse_mode="Markdown")
         return
 
     elif data == "get_unified_signal":
@@ -157,28 +156,22 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         curr = get_live_gold_price()
         settings = db["user_settings"].get(user_id, {"tf": "5M", "lot": 0.01})
-        existing_active = db["active_signals"].get(user_id)
         
-        signal_data = advanced_institutional_analysis(curr, existing_active, settings["tf"], settings["lot"])
+        signal = real_institutional_strategy(curr, settings["tf"], settings["lot"])
         
-        if not existing_active or not existing_active.get("locked"):
-            signal_data["entry"] = curr
-            db["active_signals"][user_id] = signal_data
-        else:
-            signal_data = existing_active
-
         report = (
-            f"🟢 السعر الفوري: `{curr}`\n"
-            f"📊 الفريم والمؤسسي: `{settings['tf']} | اللوت: {settings['lot']}`\n"
-            f"📍 الإشارة الثغرة: `{signal_data['action_name']}`\n"
-            f"💡 التحليل: `{signal_data['strategy_note']}`\n"
-            f"🎯 الهدف الأول (TP1): `{signal_data['tp1']}`\n"
-            f"🎯 الهدف الثاني (TP2): `{signal_data['tp2']}`\n"
-            f"🚀 الهدف الثالث (TP3): `{signal_data['tp3']}`\n"
-            f"🛑 وقف الخسارة (SL): `{signal_data['sl']}`\n"
-            f"📈 **نسبة نجاح الصفقة:** `{signal_data['success_rate']}`\n"
-            f"📊 **عداد الثقة الرقمي:** `{signal_data['progress_bar']}`\n"
-            f"⏳ الوقت المتبقي لاشتراكك: `{get_remaining_time(user_id, db)}`"
+            f"🟢 **السعر الفوري للذهب:** `{curr}`\n"
+            f"📊 **الفريم واللوت:** `{settings['tf']} | اللوت: {settings['lot']}`\n"
+            f"⚡ **نوع الصفقة:** `{signal['trade_type']}`\n"
+            f"📍 **الثغرة والاستراتيجية:** `{signal['action_name']}`\n"
+            f"💡 **التحليل الفني:** `{signal['strategy_note']}`\n"
+            f"🎯 **الهدف الأول (TP1):** `{signal['tp1']}`\n"
+            f"🎯 **الهدف الثاني (TP2):** `{signal['tp2']}`\n"
+            f"🚀 **الهدف الثالث (TP3):** `{signal['tp3']}`\n"
+            f"🛑 **وقف الخسارة (SL):** `{signal['sl']}`\n"
+            f"📈 **نسبة نجاح الصفقة:** `{signal['success_rate']}`\n"
+            f"📊 **عداد الثقة الرقمي:** `{signal['progress_bar']}`\n"
+            f"⏳ **الوقت المتبقي لاشتراكك:** `{get_remaining_time(user_id, db)}`"
         )
         db["last_signal"] = report
         
@@ -201,7 +194,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("📢 نشر آخر تحليل للقناة", callback_data="publish_to_channel")],
             [InlineKeyboardButton("🔙 العودة للرئيسية", callback_data="menu_start")]
         ])
-        await query.edit_message_text("🛡️ **غرفة الحماية وتوليد الأكواد الديناميكية الفردية:**\nاختر الفئة لتوليد كود جديد خاص لشخص واحد:", reply_markup=admin_kb, parse_mode="Markdown")
+        await query.edit_message_text("🛡️ **غرفة الحماية وتوليد الأكواد الديناميكية الفردية:**\nاختر فئة الاشتراك لتوليد كود رسمي:", reply_markup=admin_kb, parse_mode="Markdown")
         return
 
     elif data.startswith("gen_"):
@@ -232,7 +225,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db["codes"][code] = {"delta": delta, "used": False}
         
         await query.edit_message_text(
-            f"✅ **تم توليد كود الـ {label} بنجاح (مخصص لمرة واحدة):**\n\n`{code}`\n\n*(انسخ هذا الكود وأعطه للزبون، ولن يستطيع أي شخص آخر استخدامه نهائياً)*",
+            f"✅ **تم توليد كود الـ {label} بنجاح (مخصص لمرة واحدة):**\n\n`{code}`\n\n*(انسخ هذا الكود وأعطه للزبون حصراً)*",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع للإدارة", callback_data="menu_admin")]]),
             parse_mode="Markdown"
         )
@@ -253,7 +246,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "admin_prompt_ban":
         context.user_data["waiting_for_ban_id"] = True
-        await query.edit_message_text("🔨 **أرسل الآن (أيدي المستخدم - ID) المراد حظره أمنياً:**", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="admin_users_list")]]), parse_mode="Markdown")
+        await query.edit_message_text("🔨 **أرسل الآن (أيدي المستخدم - ID) المراد حظره:**", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="admin_users_list")]]), parse_mode="Markdown")
         return
 
     elif data == "admin_prompt_unban":
@@ -269,7 +262,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("⚠️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
 
     elif data == "noop_c":
-        await query.answer("ℹ️ معلومة أمنية ونظام.", show_alert=False)
+        await query.answer("ℹ️ نظام الحماية والاشتراكات فعال.", show_alert=False)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -287,7 +280,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             target_id = int(update.message.text.strip())
             db["banned"].add(target_id)
-            await update.message.reply_text(f"✅ تم حظر المستخدم نهائياً برقم الأيدي: `{target_id}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
+            await update.message.reply_text(f"✅ تم حظر المستخدم برقم الأيدي: `{target_id}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
         except ValueError:
             await update.message.reply_text("❌ أيدي غير صالح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         return
@@ -300,7 +293,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 db["banned"].remove(target_id)
                 await update.message.reply_text(f"✅ تم رفع الحظر عن المستخدم: `{target_id}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
             else:
-                await update.message.reply_text("⚠️ الأيدي ليس موجوداً في قائمة المحظورين.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
+                await update.message.reply_text("⚠️ الأيدي غير موجود في قائمة المحظورين.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         except ValueError:
             await update.message.reply_text("❌ أيدي غير صالح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         return
@@ -312,7 +305,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if code_info:
             if code_info["used"]:
-                await update.message.reply_text("⚠️ **هذا الكود تم استخدامه مسبقاً من قِبل شخص آخر ولا يمكن إعادة استخدامه!**", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
+                await update.message.reply_text("⚠️ **هذا الكود مستخدم مسبقاً ولا يمكن استخدامه مرة أخرى!**", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
                 return
                 
             code_info["used"] = True
@@ -325,9 +318,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 base_time = datetime.datetime.now()
             db["users"][user_id]["expiry"] = base_time + code_info["delta"]
             
-            await update.message.reply_text(f"🎉 **تم تفعيل الاشتراك بنجاح تام!**\n⏳ الوقت المتبقي الجديد: `{get_remaining_time(user_id, db)}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
+            await update.message.reply_text(f"🎉 **تم تفعيل الاشتراك بنجاح تام!**\n⏳ الوقت المتبقي: `{get_remaining_time(user_id, db)}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
         else:
-            await update.message.reply_text("❌ **الكود غير صحيح.** تأكد من نسخه بدقة من الأدمن.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
+            await update.message.reply_text("❌ **الكود غير صحيح أو منتهي.** تأكد من نسخه بدقة.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
         return
     
     await update.message.reply_text(get_welcome_text(user_id), reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
@@ -338,7 +331,7 @@ def main():
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     
-    print("🚀 Ultimate Bot with Success Rate, Progress Bar, & Dynamic Codes - Running...")
+    print("🚀 Real Institutional Trading Bot Running...")
     app.run_polling()
 
 if __name__ == "__main__":
