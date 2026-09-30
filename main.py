@@ -4,7 +4,7 @@ import random
 import string
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-from utils import get_live_gold_price, check_forced_subscription, is_subscribed, get_remaining_time, real_institutional_strategy
+from utils import get_live_gold_price, check_forced_subscription, is_subscribed, get_remaining_time
 
 TOKEN = "8884364042:AAEPwYmYQiZ1sN7GUGouMVrgtT3EyNL1d7w"
 ADMIN_ID = 5796443586
@@ -25,21 +25,86 @@ def generate_secure_code(prefix):
     suffix = ''.join(random.choices(chars, k=6))
     return f"VIP-{prefix}-{suffix}"
 
+def get_current_session_and_country():
+    """تحديد الجلسة والدولة تلقائياً بناءً على التوقيت العالمي (UTC)"""
+    utc_hour = datetime.datetime.utcnow().hour
+    baghdad_hour = (utc_hour + 3) % 24
+
+    if 9 <= baghdad_hour < 17:
+        return "جلسة لندن 🇬🇧 (أوروبا)", "المملكة المتحدة / أوروبا"
+    elif 15 <= baghdad_hour < 24:
+        return "جلسة نيويورك 🇺🇸 (أمريكا)", "الولايات المتحدة الأمريكية"
+    elif 1 <= baghdad_hour < 9:
+        return "جلسة طوكيو / سيدني 🇯🇵🇦🇺 (آسيا)", "اليابان / أستراليا"
+    else:
+        return "جلسة تداول انتقالية (ما بين الجلسات) 🌐", "السوق العالمي (الأسواق الإلكترونية)"
+
+def generate_custom_institutional_signal(current_price, timeframe, lot):
+    """توليد تفاصيل الصفقة تلقائياً بالتنسيق الجديد المطلوب"""
+    session_name, country_name = get_current_session_and_country()
+    
+    trade_dir = random.choice(["شراء 🟢", "بيع 🔴"])
+    
+    strength_type = random.choice(["قوية", "وسط", "ضعيفة"])
+    if strength_type == "قوية":
+        strength_icon = "قوية ⚪"
+        top_val = "توب 3 🌟"
+        confidence = random.randint(85, 98)
+    elif strength_type == "وسط":
+        strength_icon = "وسط 🔵"
+        top_val = "توب 2 ⭐"
+        confidence = random.randint(65, 84)
+    else:
+        strength_icon = "ضعيفة 🟠"
+        top_val = "توب 1 🔸"
+        confidence = random.randint(50, 64)
+
+    if "شراء" in trade_dir:
+        tp1 = round(current_price + 3.5, 2)
+        tp2 = round(current_price + 7.0, 2)
+        tp3 = round(current_price + 12.0, 2)
+        sl = round(current_price - 5.0, 2)
+    else:
+        tp1 = round(current_price - 3.5, 2)
+        tp2 = round(current_price - 7.0, 2)
+        tp3 = round(current_price - 12.0, 2)
+        sl = round(current_price + 5.0, 2)
+
+    report = (
+        f"📊 صفقات الاستاذ وخبير التداول 💲\n"
+        f"                                👑🇮🇶 الاستاذ احمد السيد  🇮🇶👑\n\n"
+        f"🌐 **جلسة الصفقة:** `{session_name}`\n"
+        f"📍 **الدولة المصدرة للسيولة:** `{country_name}`\n"
+        f"⏱ **الفريم المستخدم:** `{timeframe}` | **حجم اللوت:** `{lot}`\n"
+        f"🪙 **السعر الفوري للذهب:** `{current_price}`\n\n"
+        f"⚡ **نوع الصفقة:** {trade_dir}\n"
+        f"💪 **قوة الصفقة:** {strength_icon}\n"
+        f"🎯 **تقييم وتاكيد الصفقة:** `{confidence}%` ({top_val})\n\n"
+        f"🎯 **الهدف الأول (TP1):** `{tp1}`\n"
+        f"🎯 **الهدف الثاني (TP2):** `{tp2}`\n"
+        f"🚀 **الهدف الثالث (TP3):** `{tp3}`\n"
+        f"🛑 **وقف الخسارة (SL):** `{sl}`\n\n"
+        f" 💲دامت لكم ارباحكم يا ابطال 💲\n"
+        f"                               👑🇮🇶 استاذكم احمد السيد 🇮🇶👑"
+    )
+    return report
+
 def get_clean_keyboard(is_admin=False, user_id=None):
     time_left = get_remaining_time(user_id, db) if user_id else "غير مسجل"
     settings = db.get("user_settings", {}).get(user_id, {"tf": "5M", "lot": 0.01})
     
     keyboard = [
         [InlineKeyboardButton(f"⏳ الوقت المتبقي لاشتراكك: {time_left}", callback_data="noop_c")],
-        [InlineKeyboardButton("📊 الصفقات الحقيقية والثغرات المؤسساتية", callback_data="get_unified_signal")],
+        [InlineKeyboardButton("📊 جلب تحليل وصفقة الذهب VIP", callback_data="get_unified_signal")],
         [
             InlineKeyboardButton(f"⏱ الفريم: [{settings['tf']}]", callback_data="menu_tf"),
             InlineKeyboardButton(f"⚖ اللوت: [{settings['lot']}]", callback_data="menu_lot")
         ],
         [InlineKeyboardButton("🔑 تفعيل كود اشتراك رسمي", callback_data="menu_activate")],
         [
-            InlineKeyboardButton("📸 إنستغرام", url="https://instagram.com/7_6"),
-            InlineKeyboardButton("🎵 تيك توك", url="https://tiktok.com/@7_6")
+            InlineKeyboardButton("📸 إنستغرام", url="https://instagram.com/_7ok6"),
+            InlineKeyboardButton("🎵 تيك توك", url="https://tiktok.com/@7ok6_"),
+            InlineKeyboardButton("💬 تليجرام المطور", url="https://t.me/V8V8VN")
         ]
     ]
     if is_admin:
@@ -49,7 +114,20 @@ def get_clean_keyboard(is_admin=False, user_id=None):
 def get_welcome_text(user_id=None):
     time_left = get_remaining_time(user_id, db) if user_id else "غير مسجل"
     return (
-        f"👑 **توصيات احمد السيد VIP** 🦅\n"
+        f"🦅 نورت البوت يا معلم التداول 🦅\n"
+        f"📊 وطلاب احمد السيد المحترم 📊\n"
+        f"اقدم لكم الاستاذ 🐦‍🔥 احمد السيد 🐦‍🔥\n"
+        f"خبير تداول الفوركس والذهب 🪙 \n"
+        f"🤴🏻 خبرة تحليل ومدارس على مدى 3 سنوات 🇮🇶👑\n"
+        f"📈خبرة صنع مؤشرات عالميا و وشرق اوسط 📉\n\n"
+        f"هاذا البوت يقدم \n"
+        f"🪙توصيات الذهب VIP 🪙\n"
+        f"💎ويقدم ايضا اشتراك 💸\n"
+        f" كورس لتعليم التداول 📊\n\n"
+        f"للاشتراك تواصل مع استاذ احمد \n"
+        f"Telegram:  @V8V8VN\n"
+        f"Instagram: _7ok6\n"
+        f"TikTok:  7ok6_\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"⏳ **حالة اشتراكك:** `{time_left}`\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
@@ -157,22 +235,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         curr = get_live_gold_price()
         settings = db["user_settings"].get(user_id, {"tf": "5M", "lot": 0.01})
         
-        signal = real_institutional_strategy(curr, settings["tf"], settings["lot"])
-        
-        report = (
-            f"🟢 **السعر الفوري للذهب:** `{curr}`\n"
-            f"📊 **الفريم واللوت:** `{settings['tf']} | اللوت: {settings['lot']}`\n"
-            f"⚡ **نوع الصفقة:** `{signal['trade_type']}`\n"
-            f"📍 **الثغرة والاستراتيجية:** `{signal['action_name']}`\n"
-            f"💡 **التحليل الفني:** `{signal['strategy_note']}`\n"
-            f"🎯 **الهدف الأول (TP1):** `{signal['tp1']}`\n"
-            f"🎯 **الهدف الثاني (TP2):** `{signal['tp2']}`\n"
-            f"🚀 **الهدف الثالث (TP3):** `{signal['tp3']}`\n"
-            f"🛑 **وقف الخسارة (SL):** `{signal['sl']}`\n"
-            f"📈 **نسبة نجاح الصفقة:** `{signal['success_rate']}`\n"
-            f"📊 **عداد الثقة الرقمي:** `{signal['progress_bar']}`\n"
-            f"⏳ **الوقت المتبقي لاشتراكك:** `{get_remaining_time(user_id, db)}`"
-        )
+        report = generate_custom_institutional_signal(curr, settings["tf"], settings["lot"])
         db["last_signal"] = report
         
         back_markup = InlineKeyboardMarkup([
@@ -262,7 +325,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("⚠️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
 
     elif data == "noop_c":
-        await query.answer("ℹ️ نظام الحماية والاشتراكات فعال.", show_alert=False)
+        await query.answer("ℹ نظام الحماية والاشتراكات فعال.", show_alert=False)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
