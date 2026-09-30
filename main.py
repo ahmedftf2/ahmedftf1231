@@ -40,49 +40,79 @@ def get_current_session_and_country():
         return "جلسة تداول انتقالية (ما بين الجلسات) 🌐", "السوق العالمي (الأسواق الإلكترونية)"
 
 def generate_custom_institutional_signal(current_price, timeframe, lot):
-    """توليد تفاصيل الصفقة تلقائياً بالتنسيق الجديد المطلوب"""
+    """توليد تفاصيل الصفقة وتحديد الأهداف حسب القوة تلقائياً"""
     session_name, country_name = get_current_session_and_country()
     
     trade_dir = random.choice(["شراء 🟢", "بيع 🔴"])
     
+    # تحديد القوة والأهداف بناءً على طلبك
     strength_type = random.choice(["قوية", "وسط", "ضعيفة"])
+    
     if strength_type == "قوية":
         strength_icon = "قوية ⚪"
         top_val = "توب 3 🌟"
         confidence = random.randint(85, 98)
+        # 3 أهداف للصفقة القوية
+        if "شراء" in trade_dir:
+            targets_str = (
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.5, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price + 7.0, 2)}`\n"
+                f"🚀 **الهدف الثالث (TP3):** `{round(current_price + 12.0, 2)}`\n"
+            )
+            sl = round(current_price - 5.0, 2)
+        else:
+            targets_str = (
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 3.5, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price - 7.0, 2)}`\n"
+                f"🚀 **الهدف الثالث (TP3):** `{round(current_price - 12.0, 2)}`\n"
+            )
+            sl = round(current_price + 5.0, 2)
+
     elif strength_type == "وسط":
         strength_icon = "وسط 🔵"
         top_val = "توب 2 ⭐"
         confidence = random.randint(65, 84)
+        # هدفين للصفقة الوسط
+        if "شراء" in trade_dir:
+            targets_str = (
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.0, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price + 6.0, 2)}`\n"
+            )
+            sl = round(current_price - 4.0, 2)
+        else:
+            targets_str = (
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 3.0, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price - 6.0, 2)}`\n"
+            )
+            sl = round(current_price + 4.0, 2)
+
     else:
         strength_icon = "ضعيفة 🟠"
         top_val = "توب 1 🔸"
         confidence = random.randint(50, 64)
-
-    if "شراء" in trade_dir:
-        tp1 = round(current_price + 3.5, 2)
-        tp2 = round(current_price + 7.0, 2)
-        tp3 = round(current_price + 12.0, 2)
-        sl = round(current_price - 5.0, 2)
-    else:
-        tp1 = round(current_price - 3.5, 2)
-        tp2 = round(current_price - 7.0, 2)
-        tp3 = round(current_price - 12.0, 2)
-        sl = round(current_price + 5.0, 2)
+        # هدف واحد للصفقة الضعيفة
+        if "شراء" in trade_dir:
+            targets_str = (
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 2.5, 2)}`\n"
+            )
+            sl = round(current_price - 3.0, 2)
+        else:
+            targets_str = (
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 2.5, 2)}`\n"
+            )
+            sl = round(current_price + 3.0, 2)
 
     report = (
         f"📊 صفقات الاستاذ وخبير التداول 💲\n"
         f"                                👑🇮🇶 الاستاذ احمد السيد  🇮🇶👑\n\n"
         f"🌐 **جلسة الصفقة:** `{session_name}`\n"
         f"📍 **الدولة المصدرة للسيولة:** `{country_name}`\n"
-        f"⏱ **الفريم المستخدم:** `{timeframe}` | **حجم اللوت:** `{lot}`\n"
-        f"🪙 **السعر الفوري للذهب:** `{current_price}`\n\n"
+        f"🪙 **السعر الحالي للذهب (حي):** `{current_price}`\n"
+        f"⏱ **الفريم:** `{timeframe}` | **اللوت:** `{lot}`\n\n"
         f"⚡ **نوع الصفقة:** {trade_dir}\n"
         f"💪 **قوة الصفقة:** {strength_icon}\n"
-        f"🎯 **تقييم وتاكيد الصفقة:** `{confidence}%` ({top_val})\n\n"
-        f"🎯 **الهدف الأول (TP1):** `{tp1}`\n"
-        f"🎯 **الهدف الثاني (TP2):** `{tp2}`\n"
-        f"🚀 **الهدف الثالث (TP3):** `{tp3}`\n"
+        f"🎯 **تاكيد الصفقة:** `{confidence}%` ({top_val})\n\n"
+        f"{targets_str}"
         f"🛑 **وقف الخسارة (SL):** `{sl}`\n\n"
         f" 💲دامت لكم ارباحكم يا ابطال 💲\n"
         f"                               👑🇮🇶 استاذكم احمد السيد 🇮🇶👑"
@@ -322,7 +352,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=CHANNEL_USERNAME, text=db["last_signal"], parse_mode="Markdown")
             await query.edit_message_text("✅ تم النشر للقناة بنجاح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         else:
-            await query.edit_message_text("⚠️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
+            await query.edit_message_text("⚠️️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
 
     elif data == "noop_c":
         await query.answer("ℹ نظام الحماية والاشتراكات فعال.", show_alert=False)
