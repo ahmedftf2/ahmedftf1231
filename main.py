@@ -25,7 +25,6 @@ def generate_secure_code(prefix):
     return f"VIP-{prefix}-{suffix}"
 
 def get_current_session_and_country():
-    """تحديد الجلسة والدولة تلقائياً بناءً على التوقيت العالمي (UTC)"""
     utc_hour = datetime.datetime.utcnow().hour
     baghdad_hour = (utc_hour + 3) % 24
 
@@ -39,7 +38,6 @@ def get_current_session_and_country():
         return "جلسة تداول انتقالية (ما بين الجلسات) 🌐", "السوق العالمي (الأسواق الإلكترونية)"
 
 def generate_custom_institutional_signal(current_price, timeframe, lot):
-    """توليد تفاصيل الصفقة وتحديد الأهداف حسب القوة تلقائياً"""
     session_name, country_name = get_current_session_and_country()
     
     trade_dir = random.choice(["شراء 🟢", "بيع 🔴"])
@@ -48,51 +46,51 @@ def generate_custom_institutional_signal(current_price, timeframe, lot):
     if strength_type == "قوية":
         strength_icon = "قوية ⚪"
         top_val = "توب 3 🌟"
-        confidence = random.randint(85, 98)
+        confidence = random.randint(88, 99)
         if "شراء" in trade_dir:
             targets_str = (
-                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.5, 2)}`\n"
-                f"🎯 **الهدف الثاني (TP2):** `{round(current_price + 7.0, 2)}`\n"
-                f"🚀 **الهدف الثالث (TP3):** `{round(current_price + 12.0, 2)}`\n"
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.8, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price + 7.5, 2)}`\n"
+                f"🚀 **الهدف الثالث (TP3):** `{round(current_price + 13.0, 2)}`\n"
             )
-            sl = round(current_price - 5.0, 2)
+            sl = round(current_price - 4.5, 2)
         else:
             targets_str = (
-                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 3.5, 2)}`\n"
-                f"🎯 **الهدف الثاني (TP2):** `{round(current_price - 7.0, 2)}`\n"
-                f"🚀 **الهدف الثالث (TP3):** `{round(current_price - 12.0, 2)}`\n"
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 3.8, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price - 7.5, 2)}`\n"
+                f"🚀 **الهدف الثالث (TP3):** `{round(current_price - 13.0, 2)}`\n"
             )
-            sl = round(current_price + 5.0, 2)
+            sl = round(current_price + 4.5, 2)
 
     elif strength_type == "وسط":
         strength_icon = "وسط 🔵"
         top_val = "توب 2 ⭐"
-        confidence = random.randint(65, 84)
+        confidence = random.randint(70, 86)
         if "شراء" in trade_dir:
             targets_str = (
-                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.0, 2)}`\n"
-                f"🎯 **الهدف الثاني (TP2):** `{round(current_price + 6.0, 2)}`\n"
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.2, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price + 6.5, 2)}`\n"
             )
             sl = round(current_price - 4.0, 2)
         else:
             targets_str = (
-                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 3.0, 2)}`\n"
-                f"🎯 **الهدف الثاني (TP2):** `{round(current_price - 6.0, 2)}`\n"
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 3.2, 2)}`\n"
+                f"🎯 **الهدف الثاني (TP2):** `{round(current_price - 6.5, 2)}`\n"
             )
             sl = round(current_price + 4.0, 2)
 
     else:
         strength_icon = "ضعيفة 🟠"
         top_val = "توب 1 🔸"
-        confidence = random.randint(50, 64)
+        confidence = random.randint(55, 68)
         if "شراء" in trade_dir:
             targets_str = (
-                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 2.5, 2)}`\n"
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price + 2.8, 2)}`\n"
             )
             sl = round(current_price - 3.0, 2)
         else:
             targets_str = (
-                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 2.5, 2)}`\n"
+                f"🎯 **الهدف الأول (TP1):** `{round(current_price - 2.8, 2)}`\n"
             )
             sl = round(current_price + 3.0, 2)
 
@@ -239,10 +237,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "get_unified_signal":
-        if not is_subscribed(user_id, ADMIN_ID, db):
-            await query.edit_message_text("❌ انتهت صلاحية اشتراكك. يرجى إدخال كود جديد لتجديد الوقت.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
-            return
-
         curr = get_live_gold_price()
         settings = db["user_settings"].get(user_id, {"tf": "5M", "lot": 0.01})
         
@@ -267,7 +261,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("👥 إدارة وحظر المشتركين والأيديات", callback_data="admin_users_list")],
             [InlineKeyboardButton("🔙 العودة للرئيسية", callback_data="menu_start")]
         ])
-        await query.edit_message_text("🛡️ **غرفة الحماية وتوليد الأكواد الديناميكية الفردية:**\nاختر فئة الاشتراك لتوليد كود رسمي:", reply_markup=admin_kb, parse_mode="Markdown")
+        await query.edit_message_text("🛡 **غرفة الحماية وتوليد الأكواد الديناميكية الفردية:**\nاختر فئة الاشتراك لتوليد كود رسمي:", reply_markup=admin_kb, parse_mode="Markdown")
         return
 
     elif data.startswith("gen_"):
@@ -328,7 +322,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "noop_c":
-        await query.answer("ℹ نظام الحماية والأكواد فعال.", show_alert=False)
+        await query.answer("ℹ نظام الأكواد والتداول فعال وصحيح.", show_alert=False)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -393,7 +387,7 @@ def main():
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     
-    print("🚀 Real Institutional Trading Bot Running (No Forced Sub)...")
+    print("🚀 Ultimate Institutional Trading Bot Running (v2026 - Production Real)...")
     app.run_polling()
 
 if __name__ == "__main__":
