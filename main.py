@@ -322,7 +322,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "noop_c":
-        await query.answer("ℹ نظام الأكواد والتداول فعال وصحيح.", show_alert=False)
+        await query.answer("ℹ النظام والأكواد بكامل قوتها.", show_alert=False)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -387,7 +387,7 @@ def main():
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     
-    print("🚀 Ultimate Institutional Trading Bot Running (v2026 - Production Real)...")
+    print("🚀 Ultimate Institutional Trading Bot Running (v2026 - Master Full Edition)...")
     app.run_polling()
 
 if __name__ == "__main__":
