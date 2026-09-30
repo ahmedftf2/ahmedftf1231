@@ -156,6 +156,8 @@ def get_welcome_text(user_id=None):
         f" كورس لتعليم التداول 📊\n\n"
         f"للاشتراك تواصل مع استاذ احمد \n"
         f"Telegram:  @V8V8VN\n"
+        f"Instagram: _7ok6\n"
+        f"TikTok:  7ok6_\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"⏳ **حالة اشتراكك:** `{time_left}`\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
@@ -173,7 +175,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("📢 اشترك في القناة الرسمية الآن", url=f"https://t.me/{CHANNEL_USERNAME.replace('@', '')}")],
             [InlineKeyboardButton("🔄 تحقق من الاشتراك", callback_data="menu_start")]
         ])
-        msg = f"🚨 **يجب الاشتراك أولاً في قناة المطور:**\n👉 {CHANNEL_USERNAME}"
+        msg = f"🚨 **يجب الاشتراك أولاً في قناتك الرسمية:**\n👉 {CHANNEL_USERNAME}"
         if update.callback_query:
             await update.callback_query.message.edit_text(msg, reply_markup=join_markup, parse_mode="Markdown")
         else:
@@ -350,7 +352,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=CHANNEL_USERNAME, text=db["last_signal"], parse_mode="Markdown")
             await query.edit_message_text("✅ تم النشر للقناة بنجاح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         else:
-            await query.edit_message_text("⚠️️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
+            await query.edit_message_text("⚠️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
 
     elif data == "noop_c":
         await query.answer("ℹ نظام الحماية والاشتراكات فعال.", show_alert=False)
@@ -384,7 +386,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 db["banned"].remove(target_id)
                 await update.message.reply_text(f"✅ تم رفع الحظر عن المستخدم: `{target_id}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
             else:
-                await update.message.reply_text("⚠️ الأيدي غير موجود في قائمة المحظورين.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
+                await update.message.reply_text("⚠️️ الأيدي غير موجود في قائمة المحظورين.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         except ValueError:
             await update.message.reply_text("❌ أيدي غير صالح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         return
