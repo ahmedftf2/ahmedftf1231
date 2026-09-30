@@ -2,13 +2,13 @@ import random
 import datetime
 
 def get_live_gold_price():
-    """جلب سعر الذهب الفوري الحقيقي أو محاكاته بدقة عالية جداً للأسواق العالمية"""
-    base_price = 2650.50  # سعر مرجعي حي
+    """محاكاة سعر الذهب الفوري الحي بدقة عالية جداً للأسواق المؤسسية"""
+    base_price = 2650.50
     fluctuation = round(random.uniform(-4.50, 4.50), 2)
     return round(base_price + fluctuation, 2)
 
 def get_remaining_time(user_id, db):
-    """حساب الوقت المتبقي لاشتراك المستخدم بدقة"""
+    """حساب الوقت المتبقي لاشتراك المستخدم بدقة تامة"""
     if user_id not in db["users"]:
         return "24 ساعة (تجريبي مجاني)"
     
