@@ -43,7 +43,7 @@ def get_clean_keyboard(is_admin=False, user_id=None):
         ]
     ]
     if is_admin:
-        keyboard.insert(0, [InlineKeyboardButton("🛡️️ غرفة القيادة وحماية النظام [ADMIN]", callback_data="menu_admin")])
+        keyboard.insert(0, [InlineKeyboardButton("🛡 غرفة القيادة وحماية النظام [ADMIN]", callback_data="menu_admin")])
     return InlineKeyboardMarkup(keyboard)
 
 def get_welcome_text(user_id=None):
