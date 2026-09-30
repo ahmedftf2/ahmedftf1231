@@ -4,11 +4,10 @@ import random
 import string
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-from utils import get_live_gold_price, check_forced_subscription, is_subscribed, get_remaining_time
+from utils import get_live_gold_price, get_remaining_time
 
 TOKEN = "8884364042:AAEPwYmYQiZ1sN7GUGouMVrgtT3EyNL1d7w"
 ADMIN_ID = 5796443586
-CHANNEL_USERNAME = "@FOR2AH"
 
 db = {
     "users": {},
@@ -44,15 +43,12 @@ def generate_custom_institutional_signal(current_price, timeframe, lot):
     session_name, country_name = get_current_session_and_country()
     
     trade_dir = random.choice(["شراء 🟢", "بيع 🔴"])
-    
-    # تحديد القوة والأهداف بناءً على طلبك
     strength_type = random.choice(["قوية", "وسط", "ضعيفة"])
     
     if strength_type == "قوية":
         strength_icon = "قوية ⚪"
         top_val = "توب 3 🌟"
         confidence = random.randint(85, 98)
-        # 3 أهداف للصفقة القوية
         if "شراء" in trade_dir:
             targets_str = (
                 f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.5, 2)}`\n"
@@ -72,7 +68,6 @@ def generate_custom_institutional_signal(current_price, timeframe, lot):
         strength_icon = "وسط 🔵"
         top_val = "توب 2 ⭐"
         confidence = random.randint(65, 84)
-        # هدفين للصفقة الوسط
         if "شراء" in trade_dir:
             targets_str = (
                 f"🎯 **الهدف الأول (TP1):** `{round(current_price + 3.0, 2)}`\n"
@@ -90,7 +85,6 @@ def generate_custom_institutional_signal(current_price, timeframe, lot):
         strength_icon = "ضعيفة 🟠"
         top_val = "توب 1 🔸"
         confidence = random.randint(50, 64)
-        # هدف واحد للصفقة الضعيفة
         if "شراء" in trade_dir:
             targets_str = (
                 f"🎯 **الهدف الأول (TP1):** `{round(current_price + 2.5, 2)}`\n"
@@ -167,19 +161,6 @@ def get_welcome_text(user_id=None):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if user.id in db["banned"]:
-        return
-
-    is_joined = await check_forced_subscription(user.id, ADMIN_ID, CHANNEL_USERNAME, context)
-    if not is_joined:
-        join_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📢 اشترك في القناة الرسمية الآن", url=f"https://t.me/{CHANNEL_USERNAME.replace('@', '')}")],
-            [InlineKeyboardButton("🔄 تحقق من الاشتراك", callback_data="menu_start")]
-        ])
-        msg = f"🚨 **يجب الاشتراك أولاً في قناتك الرسمية:**\n👉 {CHANNEL_USERNAME}"
-        if update.callback_query:
-            await update.callback_query.message.edit_text(msg, reply_markup=join_markup, parse_mode="Markdown")
-        else:
-            await update.message.reply_text(msg, reply_markup=join_markup, parse_mode="Markdown")
         return
 
     if user.id not in db["users"] and user.id != ADMIN_ID:
@@ -270,7 +251,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         back_markup = InlineKeyboardMarkup([
             [InlineKeyboardButton("🔙 العودة للرئيسية", callback_data="menu_start")],
-            [InlineKeyboardButton("📢 نشر التحليل للقناة العامة", callback_data="publish_to_channel")] if is_admin else [InlineKeyboardButton("🔄 تحديث حالة الصفقة", callback_data="get_unified_signal")]
+            [InlineKeyboardButton("🔄 تحديث حالة الصفقة", callback_data="get_unified_signal")]
         ])
         
         await query.edit_message_text(report, parse_mode="Markdown", reply_markup=back_markup)
@@ -284,7 +265,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🎟 توليد كود [أسبوع] - 80$", callback_data="gen_1w"), InlineKeyboardButton("🎟 توليد كود [أسبوعين] - 140$", callback_data="gen_2w")],
             [InlineKeyboardButton("🎟 توليد كود [شهر] - 225$", callback_data="gen_30d")],
             [InlineKeyboardButton("👥 إدارة وحظر المشتركين والأيديات", callback_data="admin_users_list")],
-            [InlineKeyboardButton("📢 نشر آخر تحليل للقناة", callback_data="publish_to_channel")],
             [InlineKeyboardButton("🔙 العودة للرئيسية", callback_data="menu_start")]
         ])
         await query.edit_message_text("🛡️ **غرفة الحماية وتوليد الأكواد الديناميكية الفردية:**\nاختر فئة الاشتراك لتوليد كود رسمي:", reply_markup=admin_kb, parse_mode="Markdown")
@@ -347,23 +327,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("🔓 **أرسل الآن (أيدي المستخدم - ID) المراد رفع الحظر عنه:**", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data="admin_users_list")]]), parse_mode="Markdown")
         return
 
-    elif data == "publish_to_channel":
-        if db["last_signal"]:
-            await context.bot.send_message(chat_id=CHANNEL_USERNAME, text=db["last_signal"], parse_mode="Markdown")
-            await query.edit_message_text("✅ تم النشر للقناة بنجاح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
-        else:
-            await query.edit_message_text("⚠️ لا يوجد تحليل لنشره.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
-
     elif data == "noop_c":
-        await query.answer("ℹ نظام الحماية والاشتراكات فعال.", show_alert=False)
+        await query.answer("ℹ نظام الحماية والأكواد فعال.", show_alert=False)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in db["banned"]:
-        return
-
-    is_joined = await check_forced_subscription(user_id, ADMIN_ID, CHANNEL_USERNAME, context)
-    if not is_joined:
         return
 
     is_admin = (user_id == ADMIN_ID)
@@ -386,7 +355,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 db["banned"].remove(target_id)
                 await update.message.reply_text(f"✅ تم رفع الحظر عن المستخدم: `{target_id}`", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id), parse_mode="Markdown")
             else:
-                await update.message.reply_text("⚠️️ الأيدي غير موجود في قائمة المحظورين.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
+                await update.message.reply_text("⚠ الأيدي غير موجود في قائمة المحظورين.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         except ValueError:
             await update.message.reply_text("❌ أيدي غير صالح.", reply_markup=get_clean_keyboard(is_admin=is_admin, user_id=user_id))
         return
@@ -424,7 +393,7 @@ def main():
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     
-    print("🚀 Real Institutional Trading Bot Running...")
+    print("🚀 Real Institutional Trading Bot Running (No Forced Sub)...")
     app.run_polling()
 
 if __name__ == "__main__":
